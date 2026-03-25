@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrendPilot Pulse — DTC Trend Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090B;
+      --surface: #111113;
+      --surface-2: #18181B;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --accent: #3B82F6;
+      --accent-glow: rgba(59,130,246,0.15);
+      --accent-soft: rgba(59,130,246,0.08);
+      --positive: #22C55E;
+      --positive-soft: rgba(34,197,94,0.10);
+      --warning: #EAB308;
+      --warning-soft: rgba(234,179,8,0.08);
+      --text: #FAFAFA;
+      --text-secondary: #A1A1AA;
+      --text-tertiary: #71717A;
+      --radius: 16px;
+      --radius-sm: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* --- AMBIENT EFFECTS --- */
+    .ambient-glow {
+      position: fixed;
+      top: -40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(59,130,246,0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* --- SCROLL ANIMATIONS --- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* --- NAV --- */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 0 24px;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(9,9,11,0.8);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 56px;
+    }
+    .nav-brand {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+    .nav-brand span { color: var(--text-tertiary); font-weight: 400; }
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(59,130,246,0.25);
+      transition: all 0.3s ease;
+    }
+    .nav-cta:hover {
+      background: var(--accent-soft);
+      border-color: rgba(59,130,246,0.4);
+    }
+
+    /* --- SECTION LABEL --- */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 16px;
+    }
+
+    /* --- TICKER --- */
+    .ticker-wrap {
+      overflow: hidden;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      padding: 11px 0;
+      margin-top: 56px;
+    }
+    .ticker-inner {
+      display: flex;
+      gap: 56px;
+      animation: ticker 50s linear infinite;
+      white-space: nowrap;
+    }
+    .ticker-item {
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+      letter-spacing: -0.2px;
+    }
+    .ticker-item .pct {
+      color: var(--positive);
+      font-weight: 600;
+    }
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* --- BUTTONS --- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 32px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 0 0 0 rgba(59,130,246,0);
+      position: relative;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 32px rgba(59,130,246,0.3), 0 4px 16px rgba(59,130,246,0.2);
+    }
+    .btn:active { transform: translateY(0); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(59,130,246,0.25);
+      color: var(--accent);
+    }
+    .btn-outline:hover {
+      background: var(--accent-soft);
+      border-color: rgba(59,130,246,0.4);
+      box-shadow: none;
+      transform: translateY(-1px);
+    }
+    .btn-arrow { transition: transform 0.3s ease; }
+    .btn:hover .btn-arrow { transform: translateX(3px); }
+
+    /* --- HERO --- */
+    .hero {
+      padding: 100px 24px 80px;
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 24px;
+      background: linear-gradient(180deg, #FAFAFA 0%, #A1A1AA 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 540px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .hero-note {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    /* --- SAMPLE BRIEF CARD --- */
+    .brief-section {
+      padding: 100px 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .brief-section h2 {
+      text-align: center;
+      font-size: clamp(26px, 3vw, 36px);
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+    .brief-sub {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+      font-size: 16px;
+    }
+    .brief-card {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+    }
+    .brief-header {
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brief-header-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .brief-date {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .brief-body {
+      padding: 8px 22px;
+    }
+    .trend-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .trend-row:last-child { border-bottom: none; }
+    .trend-badge {
+      flex-shrink: 0;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .trend-badge.dtc { background: var(--accent-soft); color: var(--accent); }
+    .trend-badge.wellness { background: var(--positive-soft); color: var(--positive); }
+    .trend-badge.marketing { background: var(--warning-soft); color: var(--warning); }
+    .trend-info { flex: 1; }
+    .trend-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .trend-desc { font-size: 13px; color: var(--text-tertiary); line-height: 1.6; }
+    .trend-pct {
+      flex-shrink: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--positive);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+    .brief-footer {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brief-footer-note {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    /* --- HOW IT WORKS --- */
+    .how {
+      padding: 100px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .how-inner { max-width: 820px; margin: 0 auto; }
+    .how h2 {
+      font-size: clamp(26px, 3vw, 36px);
+      font-weight: 600;
+      margin-bottom: 56px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .step {
+      text-align: center;
+      padding: 32px 24px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color 0.3s ease;
+    }
+    .step:hover { border-color: var(--border-hover); }
+    .step-num {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      border: 1px solid rgba(59,130,246,0.15);
+      color: var(--accent);
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .step h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .step p {
+      font-size: 14px;
+      color: var(--text-tertiary);
+      line-height: 1.6;
+    }
+
+    /* --- STATS --- */
+    .stats {
+      padding: 80px 24px;
+    }
+    .stats-inner {
+      max-width: 820px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+    }
+    .stat { text-align: center; }
+    .stat .num {
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -1.5px;
+      line-height: 1;
+    }
+    .stat .desc {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: 10px;
+    }
+
+    /* --- PRICING --- */
+    .pricing {
+      padding: 100px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .pricing-inner { max-width: 860px; margin: 0 auto; }
+    .pricing h2 {
+      font-size: clamp(26px, 3vw, 36px);
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+    .pricing-sub {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 56px;
+      font-size: 16px;
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .price-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      position: relative;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+    .price-card:hover {
+      border-color: var(--border-hover);
+    }
+    .price-card.featured {
+      background: var(--surface-2);
+      border-color: rgba(59,130,246,0.3);
+    }
+    .price-card.featured:hover {
+      border-color: rgba(59,130,246,0.5);
+      transform: translateY(-2px);
+    }
+    .popular-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .price-name {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+    }
+    .price-amount {
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .price-period {
+      font-size: 14px;
+      color: var(--text-tertiary);
+      margin-bottom: 24px;
+    }
+    .price-features {
+      list-style: none;
+      margin-bottom: 28px;
+    }
+    .price-features li {
+      font-size: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-secondary);
+    }
+    .price-features li:last-child { border-bottom: none; }
+    .price-features li::before {
+      content: "✓";
+      color: var(--positive);
+      font-weight: 700;
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+    .price-card .btn { width: 100%; text-align: center; justify-content: center; font-size: 14px; padding: 12px 20px; }
+
+    /* --- FAQ --- */
+    .faq-section {
+      padding: 100px 24px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .faq-section h2 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 40px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-q {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 22px 0;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: color 0.2s;
+    }
+    .faq-q:hover { color: var(--text-secondary); }
+    .faq-q .chevron {
+      color: var(--text-tertiary);
+      font-size: 16px;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .faq-q.open .chevron { transform: rotate(180deg); }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .faq-a p {
+      padding: 0 0 22px;
+      font-size: 15px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+
+    /* --- CTA --- */
+    .cta-section {
+      border-top: 1px solid var(--border);
+      padding: 120px 24px;
+      text-align: center;
+      position: relative;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 600;
+      max-width: 520px;
+      margin: 0 auto 18px;
+      letter-spacing: -0.8px;
+      line-height: 1.1;
+      position: relative;
+    }
+    .cta-section p {
+      color: var(--text-secondary);
+      max-width: 440px;
+      margin: 0 auto 40px;
+      font-size: 16px;
+      position: relative;
+    }
+    .cta-note {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      position: relative;
+    }
+
+    /* --- FOOTER --- */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    footer p { font-size: 13px; color: var(--text-tertiary); }
+    footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    footer a:hover { color: var(--accent); }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 768px) {
+      .hero { padding: 80px 20px 60px; }
+      .steps, .pricing-grid { grid-template-columns: 1fr; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+      .nav-brand span { display: none; }
+      .brief-card { margin: 0 -4px; }
+      .price-card.featured { order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow"></div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-brand">TrendPilot <span>/ Pulse</span></div>
+      <a href="#pricing" class="nav-cta">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="ticker">
+      <span class="ticker-item">Tallow skincare <span class="pct">↑341%</span></span>
+      <span class="ticker-item">Cortisol supplements <span class="pct">↑218%</span></span>
+      <span class="ticker-item">Slow shipping as feature <span class="pct">↑89%</span></span>
+      <span class="ticker-item">Trade-in offers <span class="pct">↑156%</span></span>
+      <span class="ticker-item">UGC review screenshots <span class="pct">↑203%</span></span>
+      <span class="ticker-item">Adaptogen bundles <span class="pct">↑178%</span></span>
+      <span class="ticker-item">Creator-led unboxing <span class="pct">↑94%</span></span>
+      <span class="ticker-item">Minimalist packaging <span class="pct">↑127%</span></span>
+      <span class="ticker-item">Tallow skincare <span class="pct">↑341%</span></span>
+      <span class="ticker-item">Cortisol supplements <span class="pct">↑218%</span></span>
+      <span class="ticker-item">Slow shipping as feature <span class="pct">↑89%</span></span>
+      <span class="ticker-item">Trade-in offers <span class="pct">↑156%</span></span>
+      <span class="ticker-item">UGC review screenshots <span class="pct">↑203%</span></span>
+      <span class="ticker-item">Adaptogen bundles <span class="pct">↑178%</span></span>
+      <span class="ticker-item">Creator-led unboxing <span class="pct">↑94%</span></span>
+      <span class="ticker-item">Minimalist packaging <span class="pct">↑127%</span></span>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero reveal">
+    <div class="section-label">TrendPilot Pulse</div>
+    <h1>You're missing what's going viral right now.</h1>
+    <p>Yesterday's viral movers in DTC — synthesized, ranked, and delivered before your competitors act on them. Every morning.</p>
+    <a href="#pricing" class="btn">Get Tomorrow's Brief <span class="btn-arrow">→</span></a>
+    <p class="hero-note">Free for the first week. No credit card required.</p>
+  </section>
+
+  <!-- SAMPLE BRIEF -->
+  <section class="brief-section">
+    <div class="reveal">
+      <div class="section-label" style="text-align:center;">Sample Brief</div>
+      <h2>Yesterday's Viral Movers — DTC Edition</h2>
+      <p class="brief-sub">This is what lands in your inbox every morning by 8 AM.</p>
+    </div>
+    <div class="brief-card reveal reveal-delay-1">
+      <div class="brief-header">
+        <span class="brief-header-label">Viral Movers Brief</span>
+        <span class="brief-date">Tue, Mar 24 · 08:00</span>
+      </div>
+      <div class="brief-body">
+        <div class="trend-row">
+          <span class="trend-badge dtc">DTC</span>
+          <div class="trend-info">
+            <div class="trend-name">Tallow skincare</div>
+            <div class="trend-desc">Animal-fat moisturizers trending on TikTok. Early brands seeing 6x conversion on "grass-fed tallow balm" listings.</div>
+          </div>
+          <span class="trend-pct">↑341%</span>
+        </div>
+        <div class="trend-row">
+          <span class="trend-badge wellness">Wellness</span>
+          <div class="trend-info">
+            <div class="trend-name">Cortisol supplements</div>
+            <div class="trend-desc">"You're not tired. You're overstimulated." Every wellness brand pivoting to cortisol/stress messaging gets early-mover advantage.</div>
+          </div>
+          <span class="trend-pct">↑218%</span>
+        </div>
+        <div class="trend-row">
+          <span class="trend-badge marketing">Marketing</span>
+          <div class="trend-info">
+            <div class="trend-name">Slow shipping as feature</div>
+            <div class="trend-desc">Brands adding "ships in 5-7 days because we make it fresh" to PDPs. Average conversion lift: 14%.</div>
+          </div>
+          <span class="trend-pct">↑89%</span>
+        </div>
+      </div>
+      <div class="brief-footer">
+        <span class="brief-footer-note">Delivered every morning by 8 AM</span>
+        <span class="brief-footer-note">15,000+ signals scanned</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <div class="how">
+    <div class="how-inner">
+      <div class="reveal">
+        <div class="section-label" style="text-align:center;">How It Works</div>
+        <h2>Daily intelligence. Zero effort.</h2>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-num">1</div>
+          <h4>We scan</h4>
+          <p>TikTok, X, Reddit, and Google Trends — continuously, all day, every day.</p>
+        </div>
+        <div class="step reveal reveal-delay-1">
+          <div class="step-num">2</div>
+          <h4>We synthesize</h4>
+          <p>Patterns, spikes, and emerging signals are extracted and ranked by momentum.</p>
+        </div>
+        <div class="step reveal reveal-delay-2">
+          <div class="step-num">3</div>
+          <h4>You act</h4>
+          <p>Your brief lands before standup. You move while others are still catching up.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stats-inner">
+      <div class="stat reveal"><div class="num">15K+</div><div class="desc">Signals scanned daily</div></div>
+      <div class="stat reveal reveal-delay-1"><div class="num">8 AM</div><div class="desc">Delivery every morning</div></div>
+      <div class="stat reveal reveal-delay-2"><div class="num">4</div><div class="desc">Platforms monitored</div></div>
+      <div class="stat reveal reveal-delay-3"><div class="num">Free</div><div class="desc">First week, no card</div></div>
+    </div>
+  </div>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="pricing-inner">
+      <div class="reveal">
+        <div class="section-label" style="text-align:center;">Pricing</div>
+        <h2>Start free. Scale when it works.</h2>
+        <p class="pricing-sub">No credit card required for the free trial.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card reveal">
+          <div class="price-name">Free Trial</div>
+          <div class="price-amount">$0</div>
+          <div class="price-period">first week</div>
+          <ul class="price-features">
+            <li>Daily Viral Movers brief</li>
+            <li>3 trend highlights per day</li>
+            <li>Email delivery by 8 AM</li>
+            <li>No credit card required</li>
+          </ul>
+          <a href="https://buy.stripe.com/6oU9AS64jgR01UygPk4Rq01" class="btn btn-outline">Start Free Trial</a>
+        </div>
+        <div class="price-card featured reveal reveal-delay-1">
+          <div class="popular-badge">Most Popular</div>
+          <div class="price-name">Pro</div>
+          <div class="price-amount">$497</div>
+          <div class="price-period">per month</div>
+          <ul class="price-features">
+            <li>Full category trend analysis</li>
+            <li>Top 10 movers + action items</li>
+            <li>Competitor positioning audit</li>
+            <li>Real-time spike alerts</li>
+          </ul>
+          <a href="https://buy.stripe.com/9B63cueAP1W6ar456C4Rq02" class="btn">Get Pro <span class="btn-arrow">→</span></a>
+        </div>
+        <div class="price-card reveal reveal-delay-2">
+          <div class="price-name">Starter</div>
+          <div class="price-amount">$297</div>
+          <div class="price-period">per month</div>
+          <ul class="price-features">
+            <li>Daily brief + spike alerts</li>
+            <li>Slack/email integration</li>
+            <li>Category-specific filtering</li>
+            <li>Weekly strategy summary</li>
+          </ul>
+          <a href="https://buy.stripe.com/6oU9AS64jgR01UygPk4Rq01" class="btn btn-outline">Start Starter</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-section">
+    <h2 class="reveal">Questions</h2>
+    <div class="faq-item reveal">
+      <button class="faq-q" onclick="toggleFaq(this)">What categories do you cover? <span class="chevron">▾</span></button>
+      <div class="faq-a"><p>DTC, SaaS, and the creator economy. We're expanding based on subscriber demand — if your category matters, let us know.</p></div>
+    </div>
+    <div class="faq-item reveal reveal-delay-1">
+      <button class="faq-q" onclick="toggleFaq(this)">How is this different from following TikTok myself? <span class="chevron">▾</span></button>
+      <div class="faq-a"><p>Volume and synthesis. You'd need to monitor 15,000+ signals daily across four platforms and synthesize them into actionable patterns. We do that overnight so it's ready when you start work.</p></div>
+    </div>
+    <div class="faq-item reveal reveal-delay-1">
+      <button class="faq-q" onclick="toggleFaq(this)">How does the free trial work? <span class="chevron">▾</span></button>
+      <div class="faq-a"><p>Sign up and get 7 days of the full daily brief, no credit card required. At the end of the week, decide whether to continue with a paid plan.</p></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section reveal">
+    <h2>Tomorrow's brief is already being assembled.</h2>
+    <p>Get it before your competitors do.</p>
+    <a href="#pricing" class="btn">Get It First <span class="btn-arrow">→</span></a>
+    <p class="cta-note">Free for the first week · No credit card · Cancel anytime</p>
+  </section>
+
+  <footer>
+    <p>TrendPilot Pulse · <a href="#pricing">Start Free Trial</a> · Daily DTC trend intelligence by 8 AM.</p>
+  </footer>
+
+  <script>
+    /* Intersection Observer for reveals */
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    /* FAQ accordion */
+    function toggleFaq(btn) {
+      const answer = btn.nextElementSibling;
+      const isOpen = btn.classList.contains('open');
+      document.querySelectorAll('.faq-q.open').forEach(q => {
+        q.classList.remove('open');
+        q.nextElementSibling.style.maxHeight = null;
+      });
+      if (!isOpen) {
+        btn.classList.add('open');
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+      }
+    }
+  </script>
+</body>
+</html>
